@@ -1,7 +1,7 @@
 # LLM Usage Cost Comparison Calculator
 
 <div align="right">
-  [![中文](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-README-red?style=for-the-badge)](README.md)
+  <a href="README.md"><img src="https://img.shields.io/badge/%E4%B8%AD%E6%96%87-README-red?style=for-the-badge" alt="中文"></a>
 </div>
 
 Compare the monthly cost of **DeepSeek Official** (CNY / 1M tokens, with separate Flash / Pro pricing) against any **credit-based platform** (credits / 1M tokens). The tool auto-derives the peak/idle usage split from your usage CSV via an hourly distribution method, and produces a live three-channel monthly cost comparison with a clear cheapest-option callout.
