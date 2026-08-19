@@ -1,7 +1,7 @@
 # LLM 用量成本对比计算器
 
 <div align="right">
-  [![English](https://img.shields.io/badge/English-README-blue?style=for-the-badge)](README.en.md)
+  <a href="README.en.md"><img src="https://img.shields.io/badge/English-README-blue?style=for-the-badge" alt="English"></a>
 </div>
 
 对比 **DeepSeek 官方**（元/百万 tokens，分 Flash / Pro 定价）与**其他积分制平台**（积分/百万 tokens）的月度成本，自动按「小时分布法」从你的用量 CSV 推算高峰/空闲占比，实时给出三渠道月费对比与最省方案。
