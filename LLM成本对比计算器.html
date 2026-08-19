@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM 用量成本对比计算器 · DeepSeek vs 其他平台</title>
+<style>
+* { box-sizing: border-box; }
+body { background:#0f1419; color:#e6edf3; font-family:-apple-system,'Segoe UI',Roboto,'Microsoft YaHei',sans-serif; margin:0; padding:24px 28px 60px; line-height:1.55; font-size:14px; }
+h1 { font-size:22px; margin:0 0 4px; color:#fff; padding-right:110px; }
+.sub { color:#8b98a5; font-size:13px; margin-bottom:16px; }
+.card { background:#161b22; border:1px solid #21262d; border-radius:12px; padding:18px 22px; margin-bottom:18px; }
+h2 { font-size:16px; color:#58a6ff; margin:0 0 14px; border-left:3px solid #58a6ff; padding-left:10px; }
+h3 { font-size:14px; color:#c9d1d9; margin:16px 0 8px; }
+.row { display:flex; gap:14px; flex-wrap:wrap; }
+.col { flex:1; min-width:300px; }
+label { font-size:12px; color:#8b98a5; display:block; margin-bottom:4px; }
+input, select { background:#0d1117; color:#e6edf3; border:1px solid #30363d; border-radius:7px; padding:7px 9px; font-size:13px; width:100%; font-family:inherit; }
+input:focus, select:focus { outline:none; border-color:#58a6ff; }
+.inline { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.inline input { width:90px; }
+table { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:6px; }
+th, td { border:1px solid #21262d; padding:7px 9px; text-align:center; }
+th { background:#1c2230; color:#c9d1d9; font-weight:600; }
+td:first-child, th:first-child { text-align:left; }
+.cheap { color:#3fb950; font-weight:600; }
+.warn { color:#f85149; font-weight:600; }
+.kpi { display:flex; gap:14px; flex-wrap:wrap; }
+.kpi .box { flex:1; min-width:165px; background:#1c2230; border-radius:10px; padding:13px 15px; }
+.kpi .num { font-size:21px; color:#58a6ff; font-weight:700; font-variant-numeric:tabular-nums; }
+.kpi .lab { font-size:12px; color:#8b98a5; margin-top:4px; }
+.barrow { display:flex; align-items:center; gap:10px; margin:6px 0; font-size:12px; }
+.blab { width:150px; text-align:right; color:#c9d1d9; flex-shrink:0; }
+.btrack { flex:1; background:#1c2230; border-radius:4px; height:20px; overflow:hidden; }
+.bfill { height:100%; border-radius:4px; }
+.bval { width:96px; color:#e6edf3; font-variant-numeric:tabular-nums; text-align:right; }
+.note { font-size:12px; color:#8b98a5; margin-top:10px; }
+.drop { border:2px dashed #30363d; border-radius:10px; padding:22px; text-align:center; color:#8b98a5; cursor:pointer; transition:.15s; }
+.drop.hover { border-color:#58a6ff; color:#58a6ff; background:#11161d; }
+.btn { background:#238636; color:#fff; border:none; border-radius:7px; padding:8px 14px; font-size:13px; cursor:pointer; font-family:inherit; }
+.btn:hover { background:#2ea043; }
+.btn.sec { background:#21262d; color:#c9d1d9; border:1px solid #30363d; }
+.btn.sec:hover { background:#2d333b; }
+.btn.sm { padding:4px 9px; font-size:12px; }
+.tag { display:inline-block; font-size:11px; padding:2px 7px; border-radius:5px; background:#1c2230; color:#8b98a5; margin-left:6px; }
+.win { color:#3fb950; font-weight:700; }
+.donut-wrap { display:flex; gap:18px; flex-wrap:wrap; align-items:center; }
+.legend { font-size:12px; }
+.legend div { display:flex; align-items:center; gap:7px; margin:4px 0; }
+.dot { width:11px; height:11px; border-radius:3px; flex-shrink:0; }
+.peakwin { background:#2d1b1b; border:1px solid #5a2a2a; border-radius:10px; padding:13px 15px; margin:10px 0; font-size:13px; }
+.peakwin b { color:#ff9b9b; }
+.hl { background:#0d1117; border:1px solid #30363d; border-radius:8px; padding:10px 12px; margin-top:8px; }
+.peakrow { display:flex; align-items:center; gap:8px; margin:6px 0; }
+.peakrow input { width:96px; }
+.muted { color:#8b98a5; }
+.pricetable { margin-top:6px; }
+.pricetable caption { font-size:12px; color:#8b98a5; text-align:left; margin-bottom:4px; }
+.btngrp { display:flex; gap:8px; margin:10px 0 4px; flex-wrap:wrap; }
+/* 引导条 */
+.guide { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+.gstep { background:#1c2230; border:1px solid #30363d; border-radius:8px; padding:8px 12px; font-size:12px; color:#c9d1d9; display:flex; align-items:center; gap:8px; }
+.gstep span.num { background:#58a6ff; color:#0d1117; font-weight:700; width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0; }
+.gstep b { color:#e6edf3; }
+/* 链接按钮 */
+.linkbtn { background:#21262d; color:#58a6ff; border:1px solid #30363d; border-radius:6px; width:36px; height:32px; cursor:pointer; font-size:14px; line-height:1; }
+.linkbtn:hover { background:#2d333b; border-color:#58a6ff; }
+.linkbtn.unlocked { color:#f85149; border-color:#f85149; }
+/* 步骤卡说明 */
+.cardintro { font-size:12px; color:#8b98a5; margin:-8px 0 14px; background:#11161d; border:1px solid #21262d; border-radius:7px; padding:8px 11px; }
+.cardintro b { color:#c9d1d9; }
+.cardintro code { background:#1c2230; padding:1px 4px; border-radius:4px; font-size:11px; }
+/* 语言切换 */
+#langBtn { position:fixed; top:14px; right:16px; z-index:99; background:#1c2230; color:#e6edf3; border:1px solid #30363d; border-radius:8px; padding:7px 14px; cursor:pointer; font-size:13px; font-family:inherit; }
+#langBtn:hover { background:#2d333b; border-color:#58a6ff; }
+</style>
+</head>
+<body>
+<button id="langBtn">English</button>
+
+<h1 data-i18n="h1">LLM 用量成本对比计算器</h1>
+<div class="sub" data-i18n="sub">对比 DeepSeek 官方（元，分 Flash/Pro 定价）· 其他平台（积分）· 当前平台（现状）· 纯前端、可离线、数据不出本机</div>
+
+<!-- 新手引导 -->
+<div class="guide">
+  <div class="gstep"><span class="num">1</span><span data-i18n="g1">导入用量 CSV（没文件？点右侧 「展示示例数据」）</span></div>
+  <div class="gstep"><span class="num">2</span><span data-i18n="g2">核对单价：DeepSeek 可一键填官方价，其他平台可点 🔗 解锁峰谷</span></div>
+  <div class="gstep"><span class="num">3</span><span data-i18n="g3">调整高峰时段 / 占比（自动推导或手动）</span></div>
+  <div class="gstep"><span class="num">4</span><span data-i18n="g4">下方图表实时给出三渠道月费对比与结论</span></div>
+</div>
+
+<!-- 1. 导入 -->
+<div class="card">
+  <h2 data-i18n="c1">① 导入用量 CSV</h2>
+  <div class="cardintro" data-i18n-html="c1i"><b>第一步：</b>上传你的 amount 明细 CSV（需含 <code>start_time_iso / end_time_iso / model / type / amount / price</code> 列）。工具会自动<b>分模型统计 Flash 与 Pro</b> 的用量。没有现成文件时，点击右侧按钮先看示例。</div>
+  <div class="drop" id="drop" data-i18n="drop">点击或拖拽 CSV 到此处（amount 明细：含 start_time_iso / end_time_iso / model / type / amount / price）</div>
+  <input type="file" id="file" accept=".csv" style="display:none">
+  <div class="row" style="margin-top:12px">
+    <div class="col">
+      <label data-i18n="lbl_model">模型筛选（决定下方图表与成本计算的统计范围）</label>
+      <select id="modelSel"><option value="__all" data-i18n="opt_all">全部模型（Flash + Pro 合并）</option></select>
+    </div>
+    <div class="col" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+      <div>
+        <button class="btn sec" id="sampleBtn" data-i18n="btn_sample">点击此按钮展示示例数据</button>
+        <div class="note" style="margin-top:4px" data-i18n="n_sample">没有 CSV？点这里先看效果（含 Flash + Pro 示例）</div>
+      </div>
+      <button class="btn sec" id="clearBtn" data-i18n="btn_clear">清空</button>
+    </div>
+  </div>
+  <div class="hl" id="usageStat" style="margin-top:12px" data-i18n="not_loaded">尚未导入数据。可点击上方「展示示例数据」按钮预览。</div>
+  <div class="hl" id="modelBreak" style="margin-top:10px" data-i18n="not_modelbreak">分模型用量明细将在此显示。</div>
+</div>
+
+<!-- 2. 计费配置 -->
+<div class="card">
+  <h2 data-i18n="c2">② 计费单价配置</h2>
+  <div class="cardintro" data-i18n-html="c2i"><b>第二步：</b>核对三家单价（均按「每百万 tokens」填）。DeepSeek 官方价可用下方两个按钮一键填入 Flash / Pro 价格；<b>其他平台默认空闲 = 高峰</b>（视为无峰谷定价，两列同步修改），点 <b>🔗</b> 解锁后可分别输入；现状单价自动从 CSV 推导、可手改。</div>
+  <div class="row">
+    <!-- 左列：DeepSeek 官方 + 现状 + 月投影 -->
+    <div class="col">
+      <h3 data-i18n="h3_ds">DeepSeek 官方（单价：元 / 百万 tokens）</h3>
+      <div class="btngrp">
+        <button class="btn sec sm" id="fillFlash" data-i18n="btn_fillFlash">自动填入 Flash 官方价</button>
+        <button class="btn sec sm" id="fillPro" data-i18n="btn_fillPro">自动填入 Pro 官方价</button>
+      </div>
+      <div class="note" style="margin-top:2px" data-i18n="n_fill">点按钮一键填入官方定价，无需手动输入。</div>
+      <table class="pricetable">
+        <caption data-i18n="cap_flash">Flash 单价（默认官方值）</caption>
+        <tr><th data-i18n="th_type">token 类型</th><th data-i18n="th_idle">空闲时段</th><th data-i18n="th_peak">高峰时段</th></tr>
+        <tr><td data-i18n="type_hit">输入(缓存命中)</td><td><input type="number" step="any" id="dsf_hit_idle" value="0.05"></td><td><input type="number" step="any" id="dsf_hit_peak" value="0.10"></td></tr>
+        <tr><td data-i18n="type_miss">输入(缓存未命中)</td><td><input type="number" step="any" id="dsf_miss_idle" value="1.50"></td><td><input type="number" step="any" id="dsf_miss_peak" value="3.00"></td></tr>
+        <tr><td data-i18n="type_out">输出</td><td><input type="number" step="any" id="dsf_out_idle" value="4.50"></td><td><input type="number" step="any" id="dsf_out_peak" value="9.00"></td></tr>
+      </table>
+      <table class="pricetable">
+        <caption data-i18n="cap_pro">Pro 单价（默认官方值）</caption>
+        <tr><th data-i18n="th_type">token 类型</th><th data-i18n="th_idle">空闲时段</th><th data-i18n="th_peak">高峰时段</th></tr>
+        <tr><td data-i18n="type_hit">输入(缓存命中)</td><td><input type="number" step="any" id="dsp_hit_idle" value="0.15"></td><td><input type="number" step="any" id="dsp_hit_peak" value="0.30"></td></tr>
+        <tr><td data-i18n="type_miss">输入(缓存未命中)</td><td><input type="number" step="any" id="dsp_miss_idle" value="4.50"></td><td><input type="number" step="any" id="dsp_miss_peak" value="9.00"></td></tr>
+        <tr><td data-i18n="type_out">输出</td><td><input type="number" step="any" id="dsp_out_idle" value="13.50"></td><td><input type="number" step="any" id="dsp_out_peak" value="27.00"></td></tr>
+      </table>
+      <h3 data-i18n="h3_cur">当前平台 / 现状（单价：元 / 百万 tokens）</h3>
+      <div class="inline">
+        <input type="number" step="any" id="curEff" value="0.0398">
+        <button class="btn sec sm" id="recalcEff" data-i18n="btn_recalc">按CSV重新计算</button>
+      </div>
+      <div class="note" data-i18n="n_cur">从 CSV 的 price×amount 实际花费推导的有效单价，可手动覆盖。</div>
+      <h3 data-i18n="h3_proj">月投影</h3>
+      <div class="inline">
+        <span class="muted" data-i18n="lbl_days">覆盖天数</span><input type="number" id="days" value="19" style="width:80px">
+        <span class="muted" data-i18n="lbl_monthCoef">月系数 =</span><span id="coef" style="color:#58a6ff">1.58</span>
+      </div>
+      <div class="note" data-i18n="n_proj">月用量 = 区间用量 × (30 / 覆盖天数)。修改天数自动更新系数。</div>
+    </div>
+    <!-- 右列：其他平台 + 转换率 -->
+    <div class="col">
+      <h3 data-i18n="h3_op">其他平台（单价：积分 / 百万 tokens）</h3>
+      <div class="note" style="margin-top:2px" data-i18n-html="n_op">默认 <b>空闲 = 高峰</b>（无峰谷定价，两列同步修改）；点 <b>🔗</b> 解锁后可分别填两个时段的价格。</div>
+      <table class="pricetable">
+        <tr><th data-i18n="th_type">token 类型</th><th data-i18n="th_idle">空闲时段</th><th style="width:42px"></th><th data-i18n="th_peak">高峰时段</th></tr>
+        <tr><td data-i18n="type_hit">输入(缓存命中)</td>
+          <td><input type="number" step="any" id="op_hit_idle" value="31"></td>
+          <td><button class="linkbtn" id="link_op_hit" data-prefix="op_hit">🔗</button></td>
+          <td><input type="number" step="any" id="op_hit_peak" value="31"></td></tr>
+        <tr><td data-i18n="type_miss">输入(缓存未命中)</td>
+          <td><input type="number" step="any" id="op_miss_idle" value="1543"></td>
+          <td><button class="linkbtn" id="link_op_miss" data-prefix="op_miss">🔗</button></td>
+          <td><input type="number" step="any" id="op_miss_peak" value="1543"></td></tr>
+        <tr><td data-i18n="type_out">输出</td>
+          <td><input type="number" step="any" id="op_out_idle" value="3086"></td>
+          <td><button class="linkbtn" id="link_op_out" data-prefix="op_out">🔗</button></td>
+          <td><input type="number" step="any" id="op_out_peak" value="3086"></td></tr>
+      </table>
+      <h3 data-i18n="h3_conv">转换率（积分 ⇄ 元）</h3>
+      <div class="inline">
+        <input type="number" id="convYuan" value="30"> <span class="muted" data-i18n="lbl_convYuan">元 =</span>
+        <input type="number" id="convCredit" value="60000"> <span class="muted" data-i18n="lbl_convCredit">积分</span>
+      </div>
+      <div class="note" id="convDerive"></div>
+      <div class="note" data-i18n="n_conv">用于把「其他平台」的积分费用换算成元，与 DeepSeek / 现状统一对比。</div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 高峰/空闲配置 -->
+<div class="card">
+  <h2 data-i18n="c3">③ 高峰 / 空闲 时段与占比</h2>
+  <div class="cardintro" data-i18n-html="c3i"><b>第三步：</b>默认按官方高峰时段（09:00-12:00、14:00-18:00）从 CSV 时间戳<b>自动推导</b>峰谷用量占比；勾选「手动调节」可直接用滑块覆盖占比。</div>
+  <label data-i18n="lbl_peakWindow">高峰时间段（默认 09:00-12:00、14:00-18:00，可增删，格式 HH:MM-HH:MM）</label>
+  <div id="peakList"></div>
+  <button class="btn sec sm" id="addPeak" style="margin-top:8px" data-i18n="btn_addPeak">+ 添加时段</button>
+  <div class="peakwin" style="margin-top:14px">
+    <div class="inline" style="justify-content:space-between">
+      <span><b data-i18n="lbl_ratio">用量占比：</b><span data-i18n="lbl_autoDerived">CSV 自动推导</span> <span id="autoPeak">29.17%</span> <span data-i18n="lbl_peak">高峰</span> / <span id="autoIdle">70.83%</span> <span data-i18n="lbl_idle">空闲</span></span>
+      <span class="inline">
+        <label style="margin:0"><input type="checkbox" id="manualChk" style="width:auto"> <span data-i18n="lbl_manual">手动调节</span></label>
+      </span>
+    </div>
+    <div id="manualBox" style="display:none; margin-top:10px">
+      <div class="inline">
+        <span class="muted" data-i18n="lbl_peakRatio">高峰占比</span>
+        <input type="range" id="peakSlider" min="0" max="100" value="29" style="flex:1">
+        <input type="number" id="peakInput" value="29" style="width:70px"> <span class="muted">%</span>
+      </div>
+    </div>
+    <div class="note" id="ratioNote"></div>
+  </div>
+</div>
+
+<!-- 4. 结果 -->
+<div class="card">
+  <h2 data-i18n="c4">④ 核心结论</h2>
+  <div class="cardintro" data-i18n-html="c4i">结果区随上方配置<b>实时更新</b>。最省方案以绿色高亮。</div>
+  <div class="kpi" id="kpi"></div>
+  <div class="note" id="conclNote"></div>
+</div>
+
+<div class="card">
+  <h2 data-i18n="c5">⑤ 用量占比与趋势</h2>
+  <div class="cardintro" data-i18n-html="c5i">左图：token 类型占比；右图：高峰/空闲占比；下方：每日用量趋势（受①模型筛选影响）。</div>
+  <div class="donut-wrap">
+    <div><div id="donutType"></div><div class="legend" id="legType"></div></div>
+    <div><div id="donutPeak"></div><div class="legend" id="legPeak"></div></div>
+  </div>
+  <h3 data-i18n="h3_daily">每日用量趋势（tokens）</h3>
+  <div id="lineChart"></div>
+</div>
+
+<div class="card">
+  <h2 data-i18n="c6">⑥ 成本对比（月费，元）</h2>
+  <div class="cardintro" data-i18n-html="c6i">柱长与费用成正比，<b>越短越省</b>。上图为月费总额，下图为有效单价（元/百万 tokens）。</div>
+  <div id="costBars"></div>
+  <h3 data-i18n="h3_eff">有效单价对比（元 / 百万 tokens）</h3>
+  <div id="priceBars"></div>
+</div>
+
+<div class="card">
+  <h2 data-i18n="c7">⑦ 明细表</h2>
+  <div class="cardintro" data-i18n-html="c7i">完整数字明细，支持一键导出 CSV / JSON 存档或二次分析。</div>
+  <h3 data-i18n="h3_sum">各渠道月费与有效单价</h3>
+  <table id="sumTable"></table>
+  <h3 data-i18n="h3_break">成本构成拆解（按月费，元）</h3>
+  <table id="breakTable"></table>
+  <div class="row" style="margin-top:14px">
+    <button class="btn" id="expCsv" data-i18n="btn_expCsv">导出结果 CSV</button>
+    <button class="btn sec" id="expJson" data-i18n="btn_expJson">导出结果 JSON</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ============ 国际化 ============
+let lang = 'zh';
+const I18N = {
+  zh: {
+    h1:"LLM 用量成本对比计算器",
+    sub:"对比 DeepSeek 官方（元，分 Flash/Pro 定价）· 其他平台（积分）· 当前平台（现状）· 纯前端、可离线、数据不出本机",
+    g1:"导入用量 CSV（没文件？点右侧 「展示示例数据」）",
+    g2:"核对单价：DeepSeek 可一键填官方价，其他平台可点 🔗 解锁峰谷",
+    g3:"调整高峰时段 / 占比（自动推导或手动）",
+    g4:"下方图表实时给出三渠道月费对比与结论",
+    c1:"① 导入用量 CSV", c2:"② 计费单价配置", c3:"③ 高峰 / 空闲 时段与占比",
+    c4:"④ 核心结论", c5:"⑤ 用量占比与趋势", c6:"⑥ 成本对比（月费，元）", c7:"⑦ 明细表",
+    c1i:"<b>第一步：</b>上传你的 amount 明细 CSV（需含 <code>start_time_iso / end_time_iso / model / type / amount / price</code> 列）。工具会自动<b>分模型统计 Flash 与 Pro</b> 的用量。没有现成文件时，点击右侧按钮先看示例。",
+    c2i:"<b>第二步：</b>核对三家单价（均按「每百万 tokens」填）。DeepSeek 官方价可用下方两个按钮一键填入 Flash / Pro 价格；<b>其他平台默认空闲 = 高峰</b>（视为无峰谷定价，两列同步修改），点 <b>🔗</b> 解锁后可分别输入；现状单价自动从 CSV 推导、可手改。",
+    c3i:"<b>第三步：</b>默认按官方高峰时段（09:00-12:00、14:00-18:00）从 CSV 时间戳<b>自动推导</b>峰谷用量占比；勾选「手动调节」可直接用滑块覆盖占比。",
+    c4i:"结果区随上方配置<b>实时更新</b>。最省方案以绿色高亮。",
+    c5i:"左图：token 类型占比；右图：高峰/空闲占比；下方：每日用量趋势（受①模型筛选影响）。",
+    c6i:"柱长与费用成正比，<b>越短越省</b>。上图为月费总额，下图为有效单价（元/百万 tokens）。",
+    c7i:"完整数字明细，支持一键导出 CSV / JSON 存档或二次分析。",
+    drop:"点击或拖拽 CSV 到此处（amount 明细：含 start_time_iso / end_time_iso / model / type / amount / price）",
+    lbl_model:"模型筛选（决定下方图表与成本计算的统计范围）",
+    opt_all:"全部模型（Flash + Pro 合并）",
+    btn_sample:"点击此按钮展示示例数据",
+    n_sample:"没有 CSV？点这里先看效果（含 Flash + Pro 示例）",
+    btn_clear:"清空",
+    not_loaded:"尚未导入数据。可点击上方「展示示例数据」按钮预览。",
+    not_modelbreak:"分模型用量明细将在此显示。",
+    h3_ds:"DeepSeek 官方（单价：元 / 百万 tokens）",
+    btn_fillFlash:"自动填入 Flash 官方价",
+    btn_fillPro:"自动填入 Pro 官方价",
+    n_fill:"点按钮一键填入官方定价，无需手动输入。",
+    cap_flash:"Flash 单价（默认官方值）",
+    cap_pro:"Pro 单价（默认官方值）",
+    th_type:"token 类型", th_idle:"空闲时段", th_peak:"高峰时段",
+    type_hit:"输入(缓存命中)", type_miss:"输入(缓存未命中)", type_out:"输出",
+    h3_cur:"当前平台 / 现状（单价：元 / 百万 tokens）",
+    btn_recalc:"按CSV重新计算",
+    n_cur:"从 CSV 的 price×amount 实际花费推导的有效单价，可手动覆盖。",
+    h3_proj:"月投影",
+    lbl_days:"覆盖天数",
+    lbl_monthCoef:"月系数 =",
+    n_proj:"月用量 = 区间用量 × (30 / 覆盖天数)。修改天数自动更新系数。",
+    h3_op:"其他平台（单价：积分 / 百万 tokens）",
+    n_op:"默认 <b>空闲 = 高峰</b>（无峰谷定价，两列同步修改）；点 <b>🔗</b> 解锁后可分别填两个时段的价格。",
+    h3_conv:"转换率（积分 ⇄ 元）",
+    lbl_convYuan:"元 =", lbl_convCredit:"积分",
+    n_conv:"用于把「其他平台」的积分费用换算成元，与 DeepSeek / 现状统一对比。",
+    lbl_peakWindow:"高峰时间段（默认 09:00-12:00、14:00-18:00，可增删，格式 HH:MM-HH:MM）",
+    btn_addPeak:"+ 添加时段",
+    lbl_ratio:"用量占比：", lbl_autoDerived:"CSV 自动推导",
+    lbl_peak:"高峰", lbl_idle:"空闲", lbl_manual:"手动调节", lbl_peakRatio:"高峰占比",
+    lbl_to:"至", lbl_del:"删",
+    lbl_link_title:"点击解锁：可分别输入空闲/高峰价格",
+    lbl_unlink_title:"点击锁定：空闲=高峰同步修改",
+    h3_daily:"每日用量趋势（tokens）",
+    h3_eff:"有效单价对比（元 / 百万 tokens）",
+    h3_sum:"各渠道月费与有效单价",
+    h3_break:"成本构成拆解（按月费，元）",
+    btn_expCsv:"导出结果 CSV", btn_expJson:"导出结果 JSON",
+    not_nodaily:"无每日数据。",
+    alert_cols:"CSV 缺少 type / amount 列",
+    alert_types:"未识别到任何 token 类型行（type 列应为 input_cache_hit_tokens / input_cache_miss_tokens / output_tokens）",
+    // 动态
+    ch_ds:"DeepSeek官方", ch_op:"其他平台", ch_cur:"当前平台",
+    scope_all:"全部模型",
+    th_model:"模型", th_hit:"命中", th_miss:"未命中", th_out:"输出", th_total:"合计", th_cost:"实际花费",
+    kpi_monthly:"月用量估算(tokens) · 系数{c}",
+    kpi_ds:"DeepSeek官方 月费(元)", kpi_op:"其他平台 月费(元)", kpi_cur:"当前平台(现状) 月费(元)",
+    kpi_best:"最省方案 · {v} 元/月",
+    concl_a:"按当前配置，最省为 {name}（{v} 元/月）。",
+    concl_save:" 比 DeepSeek 官方省约 {a}%，比现状省约 {b}%。",
+    concl_ds:"（DeepSeek官方 = Flash {a}元 + Pro {b}元）",
+    sum_th1:"渠道", sum_th2:"月费(元)", sum_th3:"有效单价(元/百万)", sum_th4:"是否最省",
+    brk_th1:"渠道", brk_th2:"命中(月费)", brk_th3:"未命中(月费)", brk_th4:"输出(月费)", brk_th5:"高峰占比", brk_th6:"空闲占比", brk_th7:"月费合计",
+    brk_ds:"DeepSeek 官方 = Flash部分 {a}元 + Pro部分 {b}元",
+    exp_h1:"渠道", exp_h2:"月费(元)", exp_h3:"有效单价(元/百万)", exp_h4:"命中月费", exp_h5:"未命中月费", exp_h6:"输出月费",
+    lbl_curEff:"现状 综合",
+    donut_total:"总 tokens", donut_peakShare:"高峰占比"
+  },
+  en: {
+    h1:"LLM Usage Cost Comparison Calculator",
+    sub:"Compare DeepSeek Official (CNY, Flash/Pro pricing) · Other Platform (credits) · Current Platform · Pure frontend, offline, data stays on your machine",
+    g1:"Import usage CSV (no file? click \"Load Sample Data\")",
+    g2:"Check prices: DeepSeek one-click official prices; Other Platform 🔗 to unlock peak/idle",
+    g3:"Adjust peak hours / split (auto or manual)",
+    g4:"Charts below show live 3-channel monthly cost comparison",
+    c1:"① Import Usage CSV", c2:"② Pricing Configuration", c3:"③ Peak / Idle Hours & Split",
+    c4:"④ Key Conclusion", c5:"⑤ Usage Split & Trend", c6:"⑥ Cost Comparison (monthly, CNY)", c7:"⑦ Detail Tables",
+    c1i:"<b>Step 1:</b> Upload your amount detail CSV (needs columns <code>start_time_iso / end_time_iso / model / type / amount / price</code>). The tool automatically <b>breaks usage down by model (Flash &amp; Pro)</b>. No file yet? Click the sample button first.",
+    c2i:"<b>Step 2:</b> Check the three price sets (all per 1M tokens). DeepSeek official prices can be filled with one click (Flash / Pro). <b>Other Platform defaults idle = peak</b> (flat pricing, columns stay synced); click <b>🔗</b> to unlock separate entry. Current Platform price is auto-derived from CSV and overridable.",
+    c3i:"<b>Step 3:</b> The peak/idle usage split is <b>auto-derived</b> from CSV timestamps using official peak hours (09:00-12:00, 14:00-18:00). Tick \"Manual adjust\" to override with a slider.",
+    c4i:"Results <b>update live</b> with your configuration. The cheapest option is highlighted in green.",
+    c5i:"Left: token-type split; right: peak/idle split; below: daily usage trend (affected by ① model filter).",
+    c6i:"Bar length ∝ cost — <b>shorter = cheaper</b>. Top: monthly totals; bottom: effective unit price (CNY / 1M tokens).",
+    c7i:"Full numeric detail, exportable to CSV / JSON for archiving or further analysis.",
+    drop:"Click or drag a CSV here (amount detail: start_time_iso / end_time_iso / model / type / amount / price)",
+    lbl_model:"Model filter (determines scope of charts & cost calculation)",
+    opt_all:"All models (Flash + Pro combined)",
+    btn_sample:"Click to Load Sample Data",
+    n_sample:"No CSV? See it in action first (Flash + Pro sample)",
+    btn_clear:"Clear",
+    not_loaded:"No data imported yet. Click \"Load Sample Data\" above to preview.",
+    not_modelbreak:"Per-model usage breakdown will appear here.",
+    h3_ds:"DeepSeek Official (price: CNY / 1M tokens)",
+    btn_fillFlash:"Auto-fill Flash Official Prices",
+    btn_fillPro:"Auto-fill Pro Official Prices",
+    n_fill:"One click to fill official prices — no manual entry.",
+    cap_flash:"Flash prices (official defaults)",
+    cap_pro:"Pro prices (official defaults)",
+    th_type:"Token type", th_idle:"Idle hours", th_peak:"Peak hours",
+    type_hit:"Input (cache hit)", type_miss:"Input (cache miss)", type_out:"Output",
+    h3_cur:"Current Platform (price: CNY / 1M tokens)",
+    btn_recalc:"Recalc from CSV",
+    n_cur:"Effective unit price derived from actual cost (price×amount) in CSV; manually overridable.",
+    h3_proj:"Monthly Projection",
+    lbl_days:"Days covered",
+    lbl_monthCoef:"Monthly factor =",
+    n_proj:"Monthly usage = period usage × (30 / days covered). Editing days updates the factor.",
+    h3_op:"Other Platform (price: credits / 1M tokens)",
+    n_op:"By default <b>idle = peak</b> (flat pricing, columns stay synced); click <b>🔗</b> to unlock and enter each period's price separately.",
+    h3_conv:"Conversion (credits ⇄ CNY)",
+    lbl_convYuan:"CNY =", lbl_convCredit:"credits",
+    n_conv:"Converts Other Platform credit costs into CNY for a unified comparison with DeepSeek / Current.",
+    lbl_peakWindow:"Peak hours (default 09:00-12:00, 14:00-18:00; add/remove; format HH:MM-HH:MM)",
+    btn_addPeak:"+ Add Window",
+    lbl_ratio:"Usage split:", lbl_autoDerived:"CSV auto-derived",
+    lbl_peak:"peak", lbl_idle:"idle", lbl_manual:"Manual adjust", lbl_peakRatio:"Peak ratio",
+    lbl_to:"to", lbl_del:"Del",
+    lbl_link_title:"Click to unlock: enter idle/peak prices separately",
+    lbl_unlink_title:"Click to lock: idle = peak (synced)",
+    h3_daily:"Daily usage trend (tokens)",
+    h3_eff:"Effective unit price comparison (CNY / 1M tokens)",
+    h3_sum:"Monthly cost & effective unit price by channel",
+    h3_break:"Cost breakdown (monthly, CNY)",
+    btn_expCsv:"Export CSV", btn_expJson:"Export JSON",
+    not_nodaily:"No daily data.",
+    alert_cols:"CSV is missing type / amount columns",
+    alert_types:"No recognized token type rows (type column should contain input_cache_hit_tokens / input_cache_miss_tokens / output_tokens)",
+    // dynamic
+    ch_ds:"DeepSeek Official", ch_op:"Other Platform", ch_cur:"Current Platform",
+    scope_all:"All models",
+    th_model:"Model", th_hit:"Hit", th_miss:"Miss", th_out:"Output", th_total:"Total", th_cost:"Actual cost",
+    kpi_monthly:"Monthly usage (tokens) · factor {c}",
+    kpi_ds:"DeepSeek Official /mo (CNY)", kpi_op:"Other Platform /mo (CNY)", kpi_cur:"Current Platform /mo (CNY)",
+    kpi_best:"Cheapest · {v} CNY/mo",
+    concl_a:"With current settings, the cheapest is {name} ({v} CNY/mo).",
+    concl_save:" Saves ~{a}% vs DeepSeek Official, ~{b}% vs Current.",
+    concl_ds:" (DeepSeek Official = Flash {a} CNY + Pro {b} CNY)",
+    sum_th1:"Channel", sum_th2:"Monthly (CNY)", sum_th3:"Eff. price (CNY/1M)", sum_th4:"Cheapest?",
+    brk_th1:"Channel", brk_th2:"Hit (mo)", brk_th3:"Miss (mo)", brk_th4:"Output (mo)", brk_th5:"Peak %", brk_th6:"Idle %", brk_th7:"Monthly total",
+    brk_ds:"DeepSeek Official = Flash {a} CNY + Pro {b} CNY",
+    exp_h1:"Channel", exp_h2:"Monthly (CNY)", exp_h3:"Eff. price (CNY/1M)", exp_h4:"Hit monthly", exp_h5:"Miss monthly", exp_h6:"Output monthly",
+    lbl_curEff:"Current avg",
+    donut_total:"Total tokens", donut_peakShare:"Peak share"
+  }
+};
+const tr = key => (I18N[lang] && I18N[lang][key] !== undefined) ? I18N[lang][key] : key;
+
+// ============ 状态 ============
+const TYPE_MAP = {
+  input_cache_hit_tokens: "输入(缓存命中)",
+  input_cache_miss_tokens: "输入(缓存未命中)",
+  output_tokens: "输出"
+};
+const TYPE_MAP_EN = {
+  input_cache_hit_tokens: "Input (cache hit)",
+  input_cache_miss_tokens: "Input (cache miss)",
+  output_tokens: "Output"
+};
+const TYPES = ["input_cache_hit_tokens","input_cache_miss_tokens","output_tokens"];
+const TYPE_COLOR = { input_cache_hit_tokens:"#58a6ff", input_cache_miss_tokens:"#ffa657", output_tokens:"#d2a8ff" };
+const CH_COLOR = { ds:"#ff6b6b", op:"#4ea1ff", cur:"#8b98a5" };
+const opLink = { op_hit:true, op_miss:true, op_out:true };
+
+let state = {
+  usage: { input_cache_hit_tokens:0, input_cache_miss_tokens:0, output_tokens:0 },
+  actualCost: 0,
+  days: 19,
+  daily: {},
+  autoPeakFrac: 7/24,
+  manual: false,
+  manualPeakFrac: 0.29,
+  peakWindows: [["09:00","12:00"],["14:00","18:00"]]
+};
+
+const $ = id => document.getElementById(id);
+const num = id => { const v = parseFloat($(id).value); return isFinite(v) ? v : 0; };
+const fmt = (x,d=2) => (isFinite(x)? x.toLocaleString(lang==='zh'?'zh-CN':'en-US',{minimumFractionDigits:d,maximumFractionDigits:d}) : '0');
+const fmtE = (x,d=2) => lang==='zh' ? fmt(x/1e8,d)+' 亿' : fmt(x/1e9,d)+'B';
+const tlabel = t => lang==='zh' ? TYPE_MAP[t] : TYPE_MAP_EN[t];
+
+// ============ 语言应用 ============
+function applyLang(){
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.title = tr(lang==='zh'?'h1':'h1');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.getAttribute('data-i18n');
+    el.textContent = tr(key);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+    el.innerHTML = tr(el.getAttribute('data-i18n-html'));
+  });
+  $('langBtn').textContent = lang === 'zh' ? 'English' : '中文';
+  ['op_hit','op_miss','op_out'].forEach(p=>{ $('link_'+p).title = opLink[p] ? tr('lbl_link_title') : tr('lbl_unlink_title'); });
+  renderModelSel();
+  if(state._agg){ updateUsageStat(); renderModelBreak(); }
+  compute();
+}
+function renderModelSel(){
+  const sel = $('modelSel');
+  const cur = sel.value;
+  const models = state._models || [];
+  sel.innerHTML = `<option value="__all">${tr('opt_all')}</option>` + models.map(m=>`<option value="${m}">${m}</option>`).join('');
+  if(cur && [...sel.options].some(o=>o.value===cur)) sel.value = cur; else sel.value = '__all';
+}
+
+// ============ CSV 解析 ============
+function parseCSV(text){
+  const rows = [];
+  let i = 0, field = '', row = [], inQ = false;
+  text = text.replace(/^\uFEFF/,'');
+  while(i < text.length){
+    const c = text[i];
+    if(inQ){
+      if(c === '"'){ if(text[i+1] === '"'){ field += '"'; i++; } else inQ = false; }
+      else field += c;
+    } else {
+      if(c === '"') inQ = true;
+      else if(c === ',') { row.push(field); field = ''; }
+      else if(c === '\n') { row.push(field); rows.push(row); field=''; row=[]; }
+      else if(c === '\r') {}
+      else field += c;
+    }
+    i++;
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+function wallHM(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso);
+  if(!m) return {h:0,m:0};
+  return { h: parseInt(m[4],10), m: parseInt(m[5],10) };
+}
+function peakSet(){
+  const s = new Set();
+  state.peakWindows.forEach(([a,b])=>{
+    const ha = parseInt(a.slice(0,2),10), hb = parseInt(b.slice(0,2),10);
+    for(let h=ha; h<hb; h++) s.add(h);
+  });
+  return s;
+}
+// 按小时分布法：将一行(amount)在 [start,end) 内按小时摊，落在高峰窗口的小时计入高峰
+function splitRow(startIso, endIso, amount, ps){
+  const s = wallHM(startIso), e = wallHM(endIso);
+  let sh = s.h + s.m/60, eh = e.h + e.m/60;
+  let span = eh - sh; if(span <= 0) span += 24;
+  let peak = 0, idle = 0, pos = sh;
+  while(pos < sh + span - 1e-9){
+    const next = Math.min(pos + 1, sh + span);
+    const frac = next - pos;
+    const hod = Math.floor(pos) % 24;
+    if(ps.has(hod)) peak += amount * frac/span; else idle += amount * frac/span;
+    pos = next;
+  }
+  return { peak, idle };
+}
+
+function loadCSV(text){
+  const rows = parseCSV(text);
+  const header = rows[0].map(h => h.trim());
+  const idx = n => header.indexOf(n);
+  const iS = idx('start_time_iso'), iE = idx('end_time_iso'), iM = idx('model'),
+        iT = idx('type'), iA = idx('amount'), iP = idx('price');
+  if(iT < 0 || iA < 0){ alert(tr('alert_cols')); return; }
+  const models = new Set();
+  const agg = {};
+  const dailyAll = {};
+  rows.slice(1).forEach(r => {
+    const type = r[iT], model = iM>=0 ? (r[iM]||'unknown') : 'unknown';
+    if(!TYPE_MAP[type]) return;
+    const amt = parseFloat(r[iA]||0) || 0;
+    const price = parseFloat(r[iP]||0) || 0;
+    const cost = price * amt;
+    models.add(model);
+    if(!agg[model]) agg[model] = {};
+    if(!agg[model][type]) agg[model][type] = { tok:0, cost:0, peak:0, idle:0 };
+    agg[model][type].tok += amt;
+    agg[model][type].cost += cost;
+    const ps = peakSet();
+    const sp = splitRow(iS>=0?r[iS]:'1970-01-01T00:00', iE>=0?r[iE]:'1970-01-02T00:00', amt, ps);
+    agg[model][type].peak += sp.peak; agg[model][type].idle += sp.idle;
+    if(iS>=0){ const d = r[iS].slice(0,10); if(!dailyAll[model]) dailyAll[model]={}; dailyAll[model][d]=(dailyAll[model][d]||0)+amt; }
+  });
+  if(models.size === 0){ alert(tr('alert_types')); return; }
+  state._agg = agg; state._models = [...models]; state._dailyAll = dailyAll;
+  const alldays = new Set();
+  Object.values(dailyAll).forEach(dm => Object.keys(dm).forEach(d=>alldays.add(d)));
+  const days = alldays.size || 19;
+  state.days = days; $('days').value = days;
+  renderModelSel();
+  applyScope();
+}
+
+function selectedModelList(){
+  const sel = $('modelSel').value;
+  const keys = Object.keys(state._agg || {});
+  if(sel === '__all') return keys;
+  return keys.includes(sel) ? [sel] : [];
+}
+function isProModel(m){ return /pro/i.test(m); }
+
+function applyScope(){
+  const agg = state._agg || {};
+  const models = selectedModelList();
+  const usage = { input_cache_hit_tokens:0, input_cache_miss_tokens:0, output_tokens:0 };
+  let actualCost = 0, peakTok = 0, idleTok = 0;
+  const dailySel = {};
+  models.forEach(m => {
+    TYPES.forEach(t => {
+      if(agg[m] && agg[m][t]){
+        usage[t] += agg[m][t].tok;
+        actualCost += agg[m][t].cost;
+        peakTok += agg[m][t].peak; idleTok += agg[m][t].idle;
+      }
+    });
+    if(state._dailyAll && state._dailyAll[m]){
+      Object.entries(state._dailyAll[m]).forEach(([d,v])=> dailySel[d]=(dailySel[d]||0)+v);
+    }
+  });
+  state.usage = usage; state.actualCost = actualCost; state.daily = dailySel;
+  const tot = usage.input_cache_hit_tokens + usage.input_cache_miss_tokens + usage.output_tokens;
+  state.autoPeakFrac = tot > 0 ? peakTok/tot : 7/24;
+  if(tot > 0){ const eff = actualCost/(tot/1e6); $('curEff').value = eff.toFixed(5); }
+  updateUsageStat();
+  renderModelBreak();
+  compute();
+}
+
+function updateUsageStat(){
+  const u = state.usage; const tot = u.input_cache_hit_tokens+u.input_cache_miss_tokens+u.output_tokens;
+  const scope = $('modelSel').value === '__all' ? tr('scope_all') : $('modelSel').value;
+  if(tot > 0){
+    const scopeTxt = lang==='zh'
+      ? `统计范围：<b>${scope}</b> · ${state.days} 天 · 总用量 <b>${fmtE(tot)}</b> tokens | 命中 <b class="cheap">${fmt(u.input_cache_hit_tokens/tot*100,2)}%</b> | 未命中 ${fmt(u.input_cache_miss_tokens/tot*100,2)}% | 输出 ${fmt(u.output_tokens/tot*100,2)}% | 实际花费 ${fmt(state.actualCost,2)} 元`
+      : `Scope: <b>${scope}</b> · ${state.days} days · Total <b>${fmtE(tot)}</b> tokens | Hit <b class="cheap">${fmt(u.input_cache_hit_tokens/tot*100,2)}%</b> | Miss ${fmt(u.input_cache_miss_tokens/tot*100,2)}% | Output ${fmt(u.output_tokens/tot*100,2)}% | Actual cost ${fmt(state.actualCost,2)} CNY`;
+    $('usageStat').innerHTML = scopeTxt;
+  } else {
+    $('usageStat').textContent = tr('not_loaded');
+  }
+}
+
+function renderModelBreak(){
+  const agg = state._agg || {};
+  const models = Object.keys(agg);
+  if(models.length === 0){ $('modelBreak').textContent = tr('not_modelbreak'); return; }
+  let body = '';
+  models.forEach(m => {
+    const get = t => agg[m][t] ? agg[m][t].tok : 0;
+    const hit=get('input_cache_hit_tokens'), miss=get('input_cache_miss_tokens'), out=get('output_tokens');
+    const tot=hit+miss+out; const cost=TYPES.reduce((a,t)=>a+(agg[m][t]?agg[m][t].cost:0),0);
+    body += `<tr><td>${m} <span class="tag">${isProModel(m)?'Pro':'Flash'}</span></td>
+      <td>${fmtE(hit,3)}</td><td>${fmtE(miss,4)}</td><td>${fmtE(out,4)}</td>
+      <td><b>${fmtE(tot,3)}</b></td><td>${lang==='zh'?fmt(cost,2)+' 元':fmt(cost,2)+' CNY'}</td></tr>`;
+  });
+  $('modelBreak').innerHTML = `<table><tr><th>${tr('th_model')}</th><th>${tr('th_hit')}</th><th>${tr('th_miss')}</th><th>${tr('th_out')}</th><th>${tr('th_total')}</th><th>${tr('th_cost')}</th></tr>${body}</table>`;
+}
+
+// ============ 计算 ============
+function compute(){
+  const u = state.usage;
+  const totTok = u.input_cache_hit_tokens + u.input_cache_miss_tokens + u.output_tokens;
+  const coef = 30 / state.days;
+  $('coef').textContent = coef.toFixed(4);
+
+  // 占比
+  const peakFrac = state.manual ? state.manualPeakFrac : state.autoPeakFrac;
+  const idleFrac = 1 - peakFrac;
+  $('autoPeak').textContent = (state.autoPeakFrac*100).toFixed(2)+'%';
+  $('autoIdle').textContent = ((1-state.autoPeakFrac)*100).toFixed(2)+'%';
+  const src = state.manual ? tr('lbl_manual') : tr('lbl_autoDerived');
+  $('ratioNote').textContent = lang==='zh'
+    ? `当前采用：${src} → 高峰 ${(peakFrac*100).toFixed(2)}% / 空闲 ${(idleFrac*100).toFixed(2)}%`
+    : `Using: ${src} → Peak ${(peakFrac*100).toFixed(2)}% / Idle ${(idleFrac*100).toFixed(2)}%`;
+
+  // 转换率
+  const yY = num('convYuan'), yC = num('convCredit');
+  const yuanPerCredit = yC>0 ? yY/yC : 0;
+  $('convDerive').textContent = yC>0
+    ? (lang==='zh' ? `1 元 = ${fmt(yC/yY,1)} 积分 · 1 积分 = ${yuanPerCredit.toFixed(6)} 元`
+                   : `1 CNY = ${fmt(yC/yY,1)} credits · 1 credit = ${yuanPerCredit.toFixed(6)} CNY`)
+    : '';
+
+  // 单价（每百万）
+  const dsf = { input_cache_hit_tokens:[num('dsf_hit_idle'),num('dsf_hit_peak')],
+               input_cache_miss_tokens:[num('dsf_miss_idle'),num('dsf_miss_peak')],
+               output_tokens:[num('dsf_out_idle'),num('dsf_out_peak')] };
+  const dsp = { input_cache_hit_tokens:[num('dsp_hit_idle'),num('dsp_hit_peak')],
+               input_cache_miss_tokens:[num('dsp_miss_idle'),num('dsp_miss_peak')],
+               output_tokens:[num('dsp_out_idle'),num('dsp_out_peak')] };
+  const op = { input_cache_hit_tokens:[num('op_hit_idle'),num('op_hit_peak')],
+               input_cache_miss_tokens:[num('op_miss_idle'),num('op_miss_peak')],
+               output_tokens:[num('op_out_idle'),num('op_out_peak')] };
+  const curEff = num('curEff');
+
+  function wprice(p){ return idleFrac*p[0] + peakFrac*p[1]; }
+  const dsfW = {}, dspW = {}, opW = {};
+  TYPES.forEach(t => { dsfW[t]=wprice(dsf[t]); dspW[t]=wprice(dsp[t]); opW[t]=wprice(op[t]); });
+
+  // DeepSeek：按模型分别取 Flash/Pro 价格集
+  const selModels = selectedModelList();
+  let dsCost=0; const dsFlashBreak={}, dsProBreak={};
+  TYPES.forEach(t=>{ dsFlashBreak[t]=0; dsProBreak[t]=0; });
+  selModels.forEach(m => {
+    const pset = isProModel(m) ? dspW : dsfW;
+    TYPES.forEach(t => {
+      const tok = (state._agg[m] && state._agg[m][t]) ? state._agg[m][t].tok : 0;
+      const c = pset[t] * (tok/1e6*coef);
+      dsCost += c;
+      if(isProModel(m)) dsProBreak[t]+=c; else dsFlashBreak[t]+=c;
+    });
+  });
+
+  const M = { input_cache_hit_tokens: u.input_cache_hit_tokens/1e6*coef,
+              input_cache_miss_tokens: u.input_cache_miss_tokens/1e6*coef,
+              output_tokens: u.output_tokens/1e6*coef };
+  const Mtot = M.input_cache_hit_tokens+M.input_cache_miss_tokens+M.output_tokens;
+  let opCostCredit=0; const opBreak={};
+  TYPES.forEach(t => { opBreak[t]=opW[t]*M[t]; opCostCredit += opBreak[t]; });
+  const opCostYuan = opCostCredit * yuanPerCredit;
+  const curCost = curEff * Mtot;
+  const dsFlashTot = TYPES.reduce((a,t)=>a+dsFlashBreak[t],0);
+  const dsProTot = TYPES.reduce((a,t)=>a+dsProBreak[t],0);
+
+  renderKPI({ totTok, coef, dsCost, opCostYuan, curCost, dsFlashTot, dsProTot });
+  renderDonuts(u, peakFrac, idleFrac);
+  renderLine();
+  renderCostBars(dsCost, opCostYuan, curCost);
+  renderPriceBars(dsfW, dspW, opW, curEff, yuanPerCredit);
+  renderTables({ u, M, Mtot, dsCost, opCostYuan, curCost, dsfW, dspW, opW, dsFlashBreak, dsProBreak, opBreak, curEff, yuanPerCredit, peakFrac, idleFrac, coef, dsFlashTot, dsProTot });
+  lastResult = { u, M, dsCost, opCostYuan, curCost, dsfW, dspW, opW, dsFlashBreak, dsProBreak, opBreak, peakFrac, idleFrac, coef, yuanPerCredit, dsFlashTot, dsProTot };
+}
+
+// ============ 渲染 ============
+function renderKPI(r){
+  const best = Math.min(r.dsCost, r.opCostYuan, r.curCost);
+  const bestName = best===r.opCostYuan?tr('ch_op'): best===r.curCost?tr('ch_cur'):tr('ch_ds');
+  const cur = lang==='zh'?'元':'CNY';
+  $('kpi').innerHTML = `
+    <div class="box"><div class="num">${fmtE(r.totTok,1)}</div><div class="lab">${tr('kpi_monthly').replace('{c}',r.coef.toFixed(2))}</div></div>
+    <div class="box"><div class="num" style="color:#ff6b6b">${fmt(r.dsCost,0)}</div><div class="lab">${tr('kpi_ds')}</div></div>
+    <div class="box"><div class="num" style="color:#4ea1ff">${fmt(r.opCostYuan,0)}</div><div class="lab">${tr('kpi_op')}</div></div>
+    <div class="box"><div class="num" style="color:#8b98a5">${fmt(r.curCost,0)}</div><div class="lab">${tr('kpi_cur')}</div></div>
+    <div class="box"><div class="num win">${bestName}</div><div class="lab">${tr('kpi_best').replace('{v}',fmt(best,0))}</div></div>`;
+  let note = tr('concl_a').replace('{name}',`<b class="win">${bestName}</b>`).replace('{v}',fmt(best,1));
+  if(best===r.opCostYuan){
+    note += tr('concl_save').replace('{a}',fmt((r.dsCost-r.opCostYuan)/r.dsCost*100,0)).replace('{b}',fmt((r.curCost-r.opCostYuan)/r.curCost*100,0));
+  }
+  note += ` <span class="muted">${tr('concl_ds').replace('{a}',fmt(r.dsFlashTot,1)).replace('{b}',fmt(r.dsProTot,1))}</span>`;
+  $('conclNote').innerHTML = note;
+}
+
+function donut(segs, centerTop, centerBot){
+  const size=170, r=58, cx=size/2, cy=size/2, circ=2*Math.PI*r;
+  const total = segs.reduce((a,b)=>a+b.value,0);
+  let off=0, parts='';
+  segs.forEach(s=>{
+    const len = total>0 ? s.value/total*circ : 0;
+    parts += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="24" stroke-dasharray="${len.toFixed(2)} ${(circ-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    off += len;
+  });
+  return `<svg width="${size}" height="${size}">${parts}
+    <text x="${cx}" y="${cy-2}" text-anchor="middle" fill="#e6edf3" font-size="15" font-weight="700">${centerTop}</text>
+    <text x="${cx}" y="${cy+16}" text-anchor="middle" fill="#8b98a5" font-size="11">${centerBot}</text></svg>`;
+}
+function renderDonuts(u, peakFrac, idleFrac){
+  const tot = u.input_cache_hit_tokens+u.input_cache_miss_tokens+u.output_tokens;
+  const tSegs = TYPES.map(t=>({label:tlabel(t), value:u[t], color:TYPE_COLOR[t]}));
+  $('donutType').innerHTML = donut(tSegs, fmtE(tot,1), tr('donut_total'));
+  $('legType').innerHTML = tSegs.map(s=>`<div><span class="dot" style="background:${s.color}"></span>${s.label} · ${tot>0?fmt(s.value/tot*100,2):0}%</div>`).join('');
+  const pSegs = [{label:tr('lbl_peak'), value:peakFrac, color:'#ff6b6b'},{label:tr('lbl_idle'), value:idleFrac, color:'#3fb950'}];
+  $('donutPeak').innerHTML = donut(pSegs, fmt(peakFrac*100,1)+'%', tr('donut_peakShare'));
+  $('legPeak').innerHTML = pSegs.map(s=>`<div><span class="dot" style="background:${s.color}"></span>${s.label} · ${fmt(s.value*100,2)}%</div>`).join('');
+}
+function renderLine(){
+  const daily = state.daily;
+  const keys = Object.keys(daily).sort();
+  if(keys.length===0){ $('lineChart').innerHTML=`<div class="note">${tr('not_nodaily')}</div>`; return; }
+  const vals = keys.map(k=>daily[k]);
+  const max = Math.max(...vals,1);
+  const w=680, h=180, pad=28;
+  const step = (w-pad*2)/Math.max(keys.length-1,1);
+  const pts = vals.map((v,i)=>`${(pad+i*step).toFixed(1)},${(h-pad - v/max*(h-pad*2)).toFixed(1)}`).join(' ');
+  const area = `${(pad).toFixed(1)},${(h-pad)} ${pts} ${(pad+(keys.length-1)*step).toFixed(1)},${(h-pad)}`;
+  let labels='';
+  const every = Math.ceil(keys.length/8);
+  keys.forEach((k,i)=>{ if(i%every===0) labels+=`<text x="${(pad+i*step).toFixed(1)}" y="${h-6}" text-anchor="middle" fill="#8b98a5" font-size="9">${k.slice(5)}</text>`; });
+  const peakNote = lang==='zh'
+    ? `峰值日 ≈ ${fmtE(max,2)} tokens（${keys[vals.indexOf(max)]}）。`
+    : `Peak day ≈ ${fmtE(max,2)} tokens (${keys[vals.indexOf(max)]}).`;
+  $('lineChart').innerHTML = `<svg width="100%" viewBox="0 0 ${w} ${h}" style="max-width:${w}px">
+    <polygon points="${area}" fill="rgba(88,166,255,0.12)"/>
+    <polyline points="${pts}" fill="none" stroke="#58a6ff" stroke-width="2"/>
+    ${labels}
+    <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="#30363d"/></svg>
+    <div class="note">${peakNote}</div>`;
+}
+function bars(items){
+  const mx = Math.max(...items.map(i=>i.value), 1e-9);
+  return items.map(i=>`<div class="barrow"><span class="blab">${i.label}</span>
+    <div class="btrack"><div class="bfill" style="width:${(i.value/mx*100).toFixed(2)}%;background:${i.color}"></div></div>
+    <span class="bval">${fmt(i.value,2)}</span></div>`).join('');
+}
+function renderCostBars(ds, op, cur){
+  $('costBars').innerHTML = bars([
+    {label:tr('ch_ds'), value:ds, color:CH_COLOR.ds},
+    {label:tr('ch_op'), value:op, color:CH_COLOR.op},
+    {label:tr('ch_cur'), value:cur, color:CH_COLOR.cur}
+  ]);
+}
+function renderPriceBars(dsfW, dspW, opW, curEff, ypc){
+  const items = TYPES.map(t=>({label:'DS-Flash '+tlabel(t), value:dsfW[t], color:CH_COLOR.ds}))
+    .concat(TYPES.map(t=>({label:'DS-Pro '+tlabel(t), value:dspW[t], color:'#ff9b9b'})))
+    .concat(TYPES.map(t=>({label:tr('ch_op')+' '+tlabel(t), value:opW[t]*ypc, color:CH_COLOR.op})))
+    .concat([{label:tr('lbl_curEff'), value:curEff, color:CH_COLOR.cur}]);
+  $('priceBars').innerHTML = bars(items);
+}
+function renderTables(d){
+  const rows = [
+    [tr('ch_ds'), d.dsCost, (d.dsCost/d.Mtot), CH_COLOR.ds],
+    [tr('ch_op'), d.opCostYuan, (d.opCostYuan/d.Mtot), CH_COLOR.op],
+    [tr('ch_cur'), d.curCost, d.curEff, CH_COLOR.cur]
+  ];
+  $('sumTable').innerHTML = `<tr><th>${tr('sum_th1')}</th><th>${tr('sum_th2')}</th><th>${tr('sum_th3')}</th><th>${tr('sum_th4')}</th></tr>` +
+    rows.map(r=>`<tr><td><span class="dot" style="display:inline-block;background:${r[3]};margin-right:6px"></span>${r[0]}</td>
+      <td class="${r[1]===Math.min(...rows.map(x=>x[1]))?'cheap':''}">${fmt(r[1],2)}</td>
+      <td>${fmt(r[2],5)}</td><td>${r[1]===Math.min(...rows.map(x=>x[1]))?'<span class="win">✓</span>':''}</td></tr>`).join('');
+  const head = `<tr><th>${tr('brk_th1')}</th><th>${tr('brk_th2')}</th><th>${tr('brk_th3')}</th><th>${tr('brk_th4')}</th><th>${tr('brk_th5')}</th><th>${tr('brk_th6')}</th><th>${tr('brk_th7')}</th></tr>`;
+  const dsRow = ['x', d.dsFlashBreak.input_cache_hit_tokens+d.dsProBreak.input_cache_hit_tokens,
+                  d.dsFlashBreak.input_cache_miss_tokens+d.dsProBreak.input_cache_miss_tokens,
+                  d.dsFlashBreak.output_tokens+d.dsProBreak.output_tokens];
+  const opRow = ['x', d.opBreak.input_cache_hit_tokens*d.yuanPerCredit, d.opBreak.input_cache_miss_tokens*d.yuanPerCredit, d.opBreak.output_tokens*d.yuanPerCredit];
+  const curRow = ['x', d.curEff*d.M.input_cache_hit_tokens, d.curEff*d.M.input_cache_miss_tokens, d.curEff*d.M.output_tokens];
+  const fmtRow = (name, arr, color) => `<tr><td><span class="dot" style="display:inline-block;background:${color};margin-right:6px"></span>${name}</td>
+    <td>${fmt(arr[1],2)}</td><td>${fmt(arr[2],2)}</td><td>${fmt(arr[3],2)}</td>
+    <td>${(d.peakFrac*100).toFixed(1)}%</td><td>${(d.idleFrac*100).toFixed(1)}%</td>
+    <td class="cheap">${fmt(arr[1]+arr[2]+arr[3],2)}</td></tr>`;
+  const dsNote = `<tr><td colspan="7" class="muted" style="text-align:left">${tr('brk_ds').replace('{a}',fmt(d.dsFlashTot,2)).replace('{b}',fmt(d.dsProTot,2))}</td></tr>`;
+  $('breakTable').innerHTML = head + fmtRow(tr('ch_ds'), dsRow, CH_COLOR.ds) + dsNote + fmtRow(tr('ch_op'), opRow, CH_COLOR.op) + fmtRow(tr('ch_cur'), curRow, CH_COLOR.cur);
+}
+
+// ============ 导出 ============
+let lastResult = null;
+function exportCSV(){
+  const r = lastResult; if(!r) return;
+  const lines = [[tr('exp_h1'),tr('exp_h2'),tr('exp_h3'),tr('exp_h4'),tr('exp_h5'),tr('exp_h6')]];
+  const dsHit=r.dsFlashBreak.input_cache_hit_tokens+r.dsProBreak.input_cache_hit_tokens;
+  const dsMiss=r.dsFlashBreak.input_cache_miss_tokens+r.dsProBreak.input_cache_miss_tokens;
+  const dsOut=r.dsFlashBreak.output_tokens+r.dsProBreak.output_tokens;
+  lines.push([tr('ch_ds'), r.dsCost.toFixed(2), (r.dsCost/r.Mtot).toFixed(5), dsHit.toFixed(2), dsMiss.toFixed(2), dsOut.toFixed(2)]);
+  lines.push([tr('ch_op'), r.opCostYuan.toFixed(2), (r.opCostYuan/r.Mtot).toFixed(5), (r.opBreak.input_cache_hit_tokens*r.yuanPerCredit).toFixed(2), (r.opBreak.input_cache_miss_tokens*r.yuanPerCredit).toFixed(2), (r.opBreak.output_tokens*r.yuanPerCredit).toFixed(2)]);
+  lines.push([tr('ch_cur'), r.curCost.toFixed(2), (r.curCost/r.Mtot).toFixed(5), (r.curEff*r.M.input_cache_hit_tokens).toFixed(2), (r.curEff*r.M.input_cache_miss_tokens).toFixed(2), (r.curEff*r.M.output_tokens).toFixed(2)]);
+  download('cost-compare.csv', lines.map(l=>l.join(',')).join('\n'), 'text/csv');
+}
+function exportJSON(){
+  if(!lastResult) return;
+  download('cost-compare.json', JSON.stringify(lastResult,null,2), 'application/json');
+}
+function download(name, content, type){
+  const blob = new Blob([content], {type});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+}
+
+// ============ 交互 ============
+function renderPeakList(){
+  const el = $('peakList');
+  el.innerHTML = state.peakWindows.map((w,i)=>`<div class="peakrow">
+    <input value="${w[0]}" data-i="${i}" data-k="0" class="pw">
+    <span class="muted">${tr('lbl_to')}</span>
+    <input value="${w[1]}" data-i="${i}" data-k="1" class="pw">
+    <button class="btn sec sm" data-del="${i}">${tr('lbl_del')}</button></div>`).join('');
+  el.querySelectorAll('.pw').forEach(inp=>inp.oninput=()=>{
+    const i=+inp.dataset.i, k=+inp.dataset.k; state.peakWindows[i][k]=inp.value;
+    if(state._agg) applyScope(); else compute();
+  });
+  el.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    state.peakWindows.splice(+b.dataset.del,1); renderPeakList(); if(state._agg) applyScope(); else compute();
+  });
+}
+function setDS(which, v){
+  const p = which==='flash'?'dsf':'dsp';
+  ['hit_idle','hit_peak','miss_idle','miss_peak','out_idle','out_peak'].forEach(k=>{
+    const el=$(p+'_'+k); if(el) el.value=v[k];
+  });
+  compute();
+}
+// 其他平台：峰谷链接输入（默认同步；点🔗解锁）
+function bindOpInputs(){
+  ['op_hit','op_miss','op_out'].forEach(prefix=>{
+    ['idle','peak'].forEach(side=>{
+      $(prefix+'_'+side).addEventListener('input', ()=>{
+        if(opLink[prefix]){
+          const v = $(prefix+'_'+side).value;
+          $(prefix+'_'+(side==='idle'?'peak':'idle')).value = v;
+        }
+        compute();
+      });
+    });
+    const btn = $('link_'+prefix);
+    btn.onclick = ()=>{
+      opLink[prefix] = !opLink[prefix];
+      btn.textContent = opLink[prefix] ? '🔗' : '🔓';
+      btn.classList.toggle('unlocked', !opLink[prefix]);
+      btn.title = opLink[prefix] ? tr('lbl_link_title') : tr('lbl_unlink_title');
+      if(opLink[prefix]){
+        const v = $(prefix+'_idle').value;
+        $(prefix+'_peak').value = v;
+      }
+      compute();
+    };
+  });
+}
+$('langBtn').onclick = ()=>{ lang = lang==='zh' ? 'en' : 'zh'; applyLang(); };
+$('addPeak').onclick = ()=>{ state.peakWindows.push(['20:00','22:00']); renderPeakList(); };
+$('file').onchange = e => { const f=e.target.files[0]; if(f) f.text().then(loadCSV); };
+$('drop').onclick = ()=>$('file').click();
+['dragover','dragenter'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.add('hover');}));
+['dragleave','drop'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.remove('hover');}));
+$('drop').addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f) f.text().then(loadCSV); });
+$('fillFlash').onclick = ()=>setDS('flash',{hit_idle:0.05,hit_peak:0.10,miss_idle:1.5,miss_peak:3.0,out_idle:4.5,out_peak:9.0});
+$('fillPro').onclick = ()=>setDS('pro',{hit_idle:0.15,hit_peak:0.30,miss_idle:4.5,miss_peak:9.0,out_idle:13.5,out_peak:27.0});
+$('sampleBtn').onclick = ()=>{
+  state._agg = {
+    'deepseek-v4-flash': {
+      input_cache_hit_tokens:{tok:2.987e9, cost:59.74, peak:2.987e9*7/24, idle:2.987e9*17/24},
+      input_cache_miss_tokens:{tok:2.78e7, cost:27.8, peak:2.78e7*7/24, idle:2.78e7*17/24},
+      output_tokens:{tok:8.46e6, cost:38.07, peak:8.46e6*7/24, idle:8.46e6*17/24}
+    },
+    'deepseek-v4-pro': {
+      input_cache_hit_tokens:{tok:4.0e7, cost:6.0, peak:4.0e7*7/24, idle:4.0e7*17/24},
+      input_cache_miss_tokens:{tok:1.0e6, cost:4.5, peak:1.0e6*7/24, idle:1.0e6*17/24},
+      output_tokens:{tok:5.0e5, cost:6.75, peak:5.0e5*7/24, idle:5.0e5*17/24}
+    }
+  };
+  state._models = ['deepseek-v4-flash','deepseek-v4-pro'];
+  state._dailyAll = {};
+  const base=Date.parse('2026-08-01');
+  const fv=[2.97e8,2.87e8,2.65e8,2.71e8,2.80e8,2.74e8,2.90e8,3.01e8,2.95e8,2.88e8,2.93e8,2.99e8,2.81e8,7.30e8,2.86e8,2.79e8,2.84e8,2.91e8,2.77e8];
+  fv.forEach((v,i)=>{ const d=new Date(base+i*864e5).toISOString().slice(0,10); state._dailyAll['deepseek-v4-flash']=state._dailyAll['deepseek-v4-flash']||{}; state._dailyAll['deepseek-v4-flash'][d]=v; });
+  state.days=19; $('days').value=19;
+  renderModelSel();
+  applyScope();
+};
+$('clearBtn').onclick = ()=>{ state.usage={input_cache_hit_tokens:0,input_cache_miss_tokens:0,output_tokens:0}; state.daily={}; state.actualCost=0; state._agg=null; state._models=[]; state._dailyAll={}; updateUsageStat(); renderModelBreak(); compute(); };
+$('recalcEff').onclick = ()=>{ if(state._agg) applyScope(); };
+$('modelSel').onchange = ()=>{ if(state._agg) applyScope(); };
+$('days').oninput = ()=>{ state.days = Math.max(1, parseInt($('days').value)||19); compute(); };
+['convYuan','convCredit','dsf_hit_idle','dsf_hit_peak','dsf_miss_idle','dsf_miss_peak','dsf_out_idle','dsf_out_peak',
+ 'dsp_hit_idle','dsp_hit_peak','dsp_miss_idle','dsp_miss_peak','dsp_out_idle','dsp_out_peak','curEff'].forEach(id=>{
+  $(id).addEventListener('input', compute);
+});
+$('manualChk').onchange = ()=>{ state.manual = $('manualChk').checked; $('manualBox').style.display = state.manual?'block':'none'; compute(); };
+$('peakSlider').oninput = ()=>{ state.manualPeakFrac = (+$('peakSlider').value)/100; $('peakInput').value = $('peakSlider').value; compute(); };
+$('peakInput').oninput = ()=>{ const v=Math.min(100,Math.max(0,+$('peakInput').value||0)); state.manualPeakFrac=v/100; $('peakSlider').value=v; compute(); };
+$('expCsv').onclick = exportCSV;
+$('expJson').onclick = exportJSON;
+
+// 初始化
+renderPeakList();
+bindOpInputs();
+applyLang();
+</script>
+</body>
+</html>
